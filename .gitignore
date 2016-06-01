@@ -1,0 +1,12 @@
+# folders
+.vs/
+/bin
+/lib
+/obj
+/Service References
+/Properties
+
+# files
+*.user
+app.config
+/DAL/WebEOC.cs
