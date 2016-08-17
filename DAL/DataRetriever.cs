@@ -337,7 +337,7 @@ namespace gbc.DAL
             //response = response.Replace("&#x0;", " ");
             //response = response.Replace("\0", " ");
 
-            _log.Debug(string.Format("Got WebEOC Response: {0}", response));
+            //_log.Debug(string.Format("Got WebEOC Response: {0}", response));
 
             if (response != null && !String.IsNullOrEmpty(response))
             {

@@ -11,9 +11,7 @@ using SpatialConnect.Entity;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace gbc.DAL
@@ -66,7 +64,7 @@ namespace gbc.DAL
             _sdeObject = sdeObject;
             _geometryType = geometryType;
 
-            _log.Debug("SDE Constructed");
+            _log.Debug("sde instance initialized..");
         }
 
         #endregion
@@ -76,64 +74,75 @@ namespace gbc.DAL
 
         public static void BindLicense(string licenseType)
         {
-            RuntimeManager.BindLicense(ProductCode.EngineOrDesktop);
+            if (ConfigurationManager.AppSettings["env"].ToString() == "dev")
+            {
+                RuntimeManager.BindLicense(ProductCode.EngineOrDesktop);
 
-            m_licenseCheckedOut = true;
+                m_licenseCheckedOut = true;
 
-            return;
+                _log.Info("arcgis dev license checked out!");
 
-            ////	ensure the license initializer is instanced
-            //if (m_license == null)
-            //{
-            //    m_license = new LicenseInitializer();
-            //}
+                return;
+            }
 
-            //_log.Info("Attempting to initialize SDE License [" + licenseType + "]");
+            //	ensure the license initializer is instanced
+            if (m_license == null)
+            {
+                m_license = new LicenseInitializer();
+            }
 
-            ////	perform a checkout if license is not checked out
-            //if (!m_licenseCheckedOut)
-            //{
-            //    switch (licenseType)
-            //    {
-            //        default:
-            //        case "DESKTOP_BASIC":
-            //            {
-            //                //	initialize the license
-            //                m_license.InitializeApplication(new ESRI.ArcGIS.esriSystem.esriLicenseProductCode[] {
-            //                        esriLicenseProductCode.esriLicenseProductCodeBasic },
-            //                        new esriLicenseExtensionCode[] { });
-            //                break;
-            //            }
-            //        case "DESKTOP_STANDARD":
-            //            {
-            //                //	initialize the license
-            //                m_license.InitializeApplication(new ESRI.ArcGIS.esriSystem.esriLicenseProductCode[] {
-            //                        esriLicenseProductCode.esriLicenseProductCodeStandard },
-            //                        new esriLicenseExtensionCode[] { });
-            //                break;
-            //            }
-            //        case "DESKTOP_ADVANCED":
-            //            {
-            //                //	initialize the license
-            //                m_license.InitializeApplication(new ESRI.ArcGIS.esriSystem.esriLicenseProductCode[] {
-            //                        esriLicenseProductCode.esriLicenseProductCodeAdvanced },
-            //                        new esriLicenseExtensionCode[] { });
+            _log.Info("attempting to checkout sde license [" + licenseType + "]");
 
-            //                break;
-            //            }
+            //	perform a checkout if license is not checked out
+            if (!m_licenseCheckedOut)
+            {
+                switch (licenseType)
+                {
+                    default:
+                    case "DESKTOP_BASIC":
+                        {
+                            //	initialize the license
+                            m_license.InitializeApplication(new ESRI.ArcGIS.esriSystem.esriLicenseProductCode[] {
+                                    esriLicenseProductCode.esriLicenseProductCodeBasic },
+                                    new esriLicenseExtensionCode[] { });
+                            break;
+                        }
+                    case "DESKTOP_STANDARD":
+                        {
+                            //	initialize the license
+                            m_license.InitializeApplication(new ESRI.ArcGIS.esriSystem.esriLicenseProductCode[] {
+                                    esriLicenseProductCode.esriLicenseProductCodeStandard },
+                                    new esriLicenseExtensionCode[] { });
+                            break;
+                        }
+                    case "DESKTOP_ADVANCED":
+                        {
+                            //	initialize the license
+                            m_license.InitializeApplication(new ESRI.ArcGIS.esriSystem.esriLicenseProductCode[] {
+                                    esriLicenseProductCode.esriLicenseProductCodeAdvanced },
+                                    new esriLicenseExtensionCode[] { });
 
-            //    }
-            //    //	set the license checkout property to true for checks when attempting to perform inserts
-            //    m_licenseCheckedOut = true;
-            //}
+                            break;
+                        }
+
+                }
+                //	set the license checkout property to true for checks when attempting to perform inserts
+                m_licenseCheckedOut = true;
+
+                _log.Info("arcgis production license checked out!");
+
+                return;
+            }
+
+            _log.Info("arcgis license already checked out!");
         }
 
         public static void CheckInLicense()
         {
-            //if (m_licenseCheckedOut)
-            //{
-            //    m_license.ShutdownApplication();
-            //}
+            if (m_licenseCheckedOut)
+            {
+                m_license.ShutdownApplication();
+            }
         }
 
         #endregion
@@ -149,8 +158,6 @@ namespace gbc.DAL
             m_workspaceFactory = (IWorkspaceFactory2)new SdeWorkspaceFactory();
             m_workspace = m_workspaceFactory.Open(_DataUtil.GetPropertySet(_Config), 0);
 
-            _log.Debug("GIS Keyword:" + _Config.arcgis_keyword);
-
             if (withEdits)
             {
                 //	start the edit session on the workspace
@@ -159,7 +166,7 @@ namespace gbc.DAL
                 m_editSession.StartEditOperation();
             }
 
-            Log.Info("SDE Connection established");
+            Log.Info("SDE Connection opened");
         }
 
         public void Disconnect(bool saveEdits)
@@ -215,44 +222,6 @@ namespace gbc.DAL
             }
 
             return nextObjectId;
-        }
-
-        /// <summary>
-        /// Determines if a record exists in the table for the supplied unique key
-        /// </summary>
-        /// <param name="uniqueKey"></param>
-        /// <returns></returns>
-        public bool HasRecord(string uniqueKey)
-        {
-            if ((_existingRecordIds != null && _existingRecordIds.Count > 0) || _sqlConnection != null)
-            {
-                return _existingRecordIds.Any(p => p == uniqueKey);
-            }
-
-            using (_sqlConnection = new SqlConnection(ConfigurationManager.ConnectionStrings[ConfigConstants.ConnectionStrings.MSSQLSDE].ConnectionString))
-            {
-                _sqlConnection.Open();
-                _log.Debug("Opened Has Record Connection");
-
-                SqlCommand command = new SqlCommand(string.Format(SDESqlConstants.QueryFormat.SELECT_OBJECTIDS_FROM_TABLE, this._sdeObject), _sqlConnection);
-                command.CommandType = System.Data.CommandType.Text;
-                command.CommandTimeout = 120;
-
-                SqlDataReader reader = command.ExecuteReader(CommandBehavior.CloseConnection);
-                _log.Debug("Issued Has Record Command");
-
-                while(reader.Read())
-                {
-                    string ukey = reader.GetString(0);
-
-                    _existingRecordIds.Add(ukey);
-                }
-
-                _sqlConnection.Close();
-                _log.Debug("Closed Has Record Connection");
-            }
-
-            return _existingRecordIds.Any(p => p == uniqueKey);
         }
 
         private void ReleaseCOMLocks()

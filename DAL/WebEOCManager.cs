@@ -52,6 +52,8 @@ namespace gbc.DAL
             UpdateResult updateResult = new UpdateResult();
             List<GeoRecord> addedRecordKeys = new List<GeoRecord>();
 
+            _log.Debug("webeoc board update in progress..");
+
             try
             {
                 foreach (var record in newRecords)
@@ -80,8 +82,6 @@ namespace gbc.DAL
                     }
                     else
                     {
-                        _log.Debug("Updating WebEOC Board Data");
-
                         if (UpdateData(board, inputView, record))
                         {
                             addedRecordKeys.Add((GeoRecord)record);
@@ -105,6 +105,8 @@ namespace gbc.DAL
         {
             try
             {
+                _log.Debug("webeoc record add attachment..");
+
                 WebEOC7.WebEOCCredentials credentials = new WebEOC7.WebEOCCredentials()
                 {
                     Incident = this.credentials.Incident,
@@ -123,7 +125,7 @@ namespace gbc.DAL
 
                 //  find a relationship for this data id and an attachment field
                 Key key =
-                    this._Container.Relationships.keys.FirstOrDefault(p => p.internal_id == record.dataid.ToString());
+                    this._Container.Cache.keys.FirstOrDefault(p => p.internal_id == record.dataid.ToString());
 
                 if (key == null)
                 {
@@ -132,7 +134,7 @@ namespace gbc.DAL
                         internal_id = record.dataid.ToString()
                     };
 
-                    this._Container.Relationships.keys.Add(key);
+                    this._Container.Cache.keys.Add(key);
                 }
 
                 key.external_id = key.external_id <= 19 ? key.external_id + 1 : 1;
@@ -148,7 +150,7 @@ namespace gbc.DAL
 
                 api7.AddAttachment(credentials, board, inputView, fieldName, record.dataid, attachmentData, attachmentName);
 
-                _log.Debug("Added Attachment to: " + fieldName + ", Filename: " + attachmentName);
+                _log.Debug("added attachment to: " + fieldName + ", filename: " + attachmentName);
 
                 return true;
             }
@@ -172,8 +174,7 @@ namespace gbc.DAL
             {
                 var xmlPayload = GetXmlPayload(record);
 
-                _log.Debug("Sending WebEOC AddData Payload");
-                _log.Debug(xmlPayload);
+                _log.Debug("webeoc board add record..");                
 
                 APISoapClient api7 = new APISoapClient();
                 WebEOC7.WebEOCCredentials webEoc7Credentials = new WebEOC7.WebEOCCredentials()
@@ -186,6 +187,8 @@ namespace gbc.DAL
                 };
 
                 record.dataid = api7.AddData(webEoc7Credentials, board, inputView, xmlPayload);
+
+                _log.Debug("webeoc board added record!");
 
                 return true;
             }
@@ -201,12 +204,13 @@ namespace gbc.DAL
         {
             try
             {
-                var xmlPayload = GetXmlPayload(record);
+                var xmlPayload = GetXmlPayload(record, false);
 
-                _log.Debug("Sending WebEOC UpdateData Payload");
-                _log.Debug(xmlPayload);
+                _log.Debug("webeoc board update record..");
 
                 api.UpdateData(this.credentials, board, inputView, xmlPayload, (int)record.dataid);
+
+                _log.Debug("webeoc board updated record!");
 
                 return true;
             }
@@ -218,11 +222,15 @@ namespace gbc.DAL
             }
         }
 
-        private string GetXmlPayload(IGeoRecord record)
+        private string GetXmlPayload(IGeoRecord record, bool includePostedDate = true)
         {
             var data = new XElement("data");
 
-            data.Add(new XElement("posted_date", DataUtil.GetWebEOCDateTime()));
+            if (includePostedDate)
+            {
+                data.Add(new XElement("posted_date", DataUtil.GetWebEOCDateTime()));
+            }
+
 
             foreach (var field in record.fields)
             {

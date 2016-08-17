@@ -73,7 +73,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="ICSharpCode.SharpZipLib">
-      <HintPath>..\spatial-connect\lib\ICSharpCode.SharpZipLib.dll</HintPath>
+      <HintPath>lib\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
     <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
       <HintPath>..\spatial-connect\packages\log4net.2.0.5\lib\net45-full\log4net.dll</HintPath>

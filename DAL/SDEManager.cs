@@ -42,13 +42,11 @@ namespace gbc.DAL
             }
             catch (Exception ex)
             {
-                _log.Info("Error encountered closing and saving SDE Edits");
+                _log.Info("error encountered closing and saving sde edits!");
                 _log.Error(ex.Message, ex);
 
                 _sde.Disconnect(false);
             }
-
-            _log.Info("Returning update result");
 
             return updateResult;
         }
@@ -76,11 +74,6 @@ namespace gbc.DAL
 
             foreach (var record in records)
             {
-                //if (_sde.HasRecord(record.uid))
-                //{
-                    //continue;
-                //}
-
                 record.dataid = _sde.InsertRecord(record);
 
                 if (record.dataid > 0)
@@ -89,7 +82,7 @@ namespace gbc.DAL
                 }
             }
 
-            _log.Debug("Affected Records: " + affectedRecords.Count);
+            _log.Debug("affected records: " + affectedRecords.Count);
             return affectedRecords;
         }
 

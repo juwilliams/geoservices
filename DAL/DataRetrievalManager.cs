@@ -58,8 +58,6 @@ namespace gbc.DAL
         {
             this._Retriever = new DataRetriever();
 
-            _log.Debug("Starting data retriever.");
-
             switch (this._Container.format.ToLower())
             {
                 case DataResponseFormatConstants.XML:
@@ -180,7 +178,7 @@ namespace gbc.DAL
             {
                 OnDataRetrievalError?.Invoke(this, ex);
 
-                _log.Error("Error encountered while attempting to retrieve data from source: ", ex);
+                _log.Error("error encountered while attempting to retrieve data from source: ", ex);
             }
         }
 
@@ -307,7 +305,7 @@ namespace gbc.DAL
 
             if (shapeFeatureCursor == null)
             {
-                throw new Exception("Failed to retrieve cursor object from input shapefile");
+                throw new Exception("failed to retrieve cursor object from input shapefile");
             }
 
             GetSpatialRecords(shapeFeatureCursor);
@@ -345,7 +343,7 @@ namespace gbc.DAL
 
             if (shapeFeatureCursor == null)
             {
-                throw new Exception("Failed to retrieve cursor object from input shapefile");
+                throw new Exception("failed to retrieve cursor object from input shapefile");
             }
 
             GetSpatialRecords(shapeFeatureCursor);
@@ -384,7 +382,7 @@ namespace gbc.DAL
 
             if (shapeFeatureCursor == null)
             {
-                throw new Exception("Failed to retrieve cursor object from input shapefile");
+                throw new Exception("failed to retrieve cursor object from input shapefile");
             }
 
             GetSpatialRecords(shapeFeatureCursor);
@@ -466,8 +464,6 @@ namespace gbc.DAL
                 {
                     records.Add(CreateRecord(row, this._Container.Fields));
                 }
-
-                _log.Info("Created [" + records.Count + "] output records.");
 
                 if (OnDataRetrievalSuccess != null)
                 {
@@ -722,7 +718,7 @@ namespace gbc.DAL
             }
 
             spatialRecord.geometry = this._Container.geometry;
-            spatialRecord.uid = MD5Encoder.GetMD5HashId(record.ToString());
+            spatialRecord.uid = MD5Encoder.GetMD5HashId(spatialRecord);
 
             return spatialRecord;
         }
@@ -829,7 +825,7 @@ namespace gbc.DAL
             var xslt = new XslCompiledTransform();
 
             //  Load the stylesheet
-            xslt.Load(XmlReader.Create(new StringReader(this._Container.Config.app_path + "\\" + this._Container.name + "\\translation.xsl")));
+            xslt.Load(this._Container.Config.app_path + "\\" + this._Container.name + "\\transform.xsl");
 
             //  Creat the stream to write the transformed document to
             var memoryStream = new MemoryStream();
