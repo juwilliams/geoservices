@@ -135,10 +135,14 @@ namespace gbc.DAL
                     };
 
                     this._Container.Cache.keys.Add(key);
+
+                    _log.Debug("cache key added: " + key.internal_id);
                 }
 
                 key.external_id = key.external_id <= 19 ? key.external_id + 1 : 1;
                 key.field_name = fieldName;
+
+                _log.Debug("cache key updated: external id=" + key.external_id + "; field_name=" + key.field_name);
 
                 fieldName = fieldName + key.external_id.ToString();
 
