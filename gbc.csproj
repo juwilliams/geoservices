@@ -115,6 +115,10 @@
     </Compile>
     <Compile Include="DAL\SDE.cs" />
     <Compile Include="DAL\WebEOCManager.cs" />
+    <Compile Include="DAO\ArcGISRest\RestAttribute.cs" />
+    <Compile Include="DAO\ArcGISRest\RestFeature.cs" />
+    <Compile Include="DAO\ArcGISRest\RestGeometry.cs" />
+    <Compile Include="DAO\ArcGISRest\RestMessage.cs" />
     <Compile Include="DAO\Cars\CarsReport.cs" />
     <Compile Include="DAO\DA\IncidentRecord.cs" />
     <Compile Include="DAO\Geocode\Candidate.cs" />

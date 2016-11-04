@@ -174,7 +174,7 @@ namespace gbc.DAL
             {
                 var xmlPayload = GetXmlPayload(record);
 
-                _log.Debug("webeoc board add record..");                
+                //_log.Info("webeoc board add record..\r\n" + xmlPayload);                
 
                 APISoapClient api7 = new APISoapClient();
                 WebEOC7.WebEOCCredentials webEoc7Credentials = new WebEOC7.WebEOCCredentials()
@@ -188,7 +188,7 @@ namespace gbc.DAL
 
                 record.dataid = api7.AddData(webEoc7Credentials, board, inputView, xmlPayload);
 
-                _log.Debug("webeoc board added record!");
+                //_log.Info("webeoc board added record!");
 
                 return true;
             }
@@ -206,11 +206,11 @@ namespace gbc.DAL
             {
                 var xmlPayload = GetXmlPayload(record, false);
 
-                _log.Debug("webeoc board update record..");
+                //_log.Info("webeoc board update record..\r\n" + xmlPayload);
 
                 api.UpdateData(this.credentials, board, inputView, xmlPayload, (int)record.dataid);
 
-                _log.Debug("webeoc board updated record!");
+                //_log.Info("webeoc board updated record!");
 
                 return true;
             }
@@ -241,7 +241,7 @@ namespace gbc.DAL
 
                 field.Value = field.Value.Replace(",", "");
 
-                data.Add(new XElement(field.GetName(), field.Value));
+                data.Add(new XElement(field.GetName(), (field.DataType.ToLower() == "short" || field.DataType.ToLower() == "long") && string.IsNullOrEmpty(field.Value) ? "0" : field.Value));
             }
 
             return data.ToString();

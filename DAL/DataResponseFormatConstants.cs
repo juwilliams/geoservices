@@ -16,6 +16,7 @@ namespace gbc.DAL
         public const string SECURE_FILE = "securefile";
         public const string WEBEOC = "webeoc";
         public const string ARCGIS = "arcgis";
+        public const string ARCGIS_REST = "arcgis_rest";
         public const string DAMAGE_ASSESSMENT = "damageassessment";
         public const string REST_XML = "restxml";
         public const string MULTIFETCH_REST_XML = "multifetchrestxml";

@@ -10,6 +10,8 @@ using System.Net;
 using System.Text;
 using System.Xml.Linq;
 
+using SCFields = SpatialConnect.Entity.Fields;
+
 namespace gbc.DAL
 {
     class DataRetriever
@@ -69,6 +71,11 @@ namespace gbc.DAL
         public void GetResponseAsString(string Url)
         {
             retrieveString(Url);
+        }
+
+        public void GetArcGISRestResponseAsString(string url, SCFields fields)
+        {
+            retrieveArcGISRestString(url, fields);
         }
 
         public void GetResponseAsFile(string Url, string Output)
@@ -232,6 +239,36 @@ namespace gbc.DAL
         private void retrieveString(string url)
         {
             string _data = string.Empty;
+
+            using (WebClient client = new WebClient())
+            {
+                _data = client.DownloadString(url);
+            }
+
+            _log.Debug("Download of client data complete.");
+
+            //	invoke the getdatasuccessasstring event
+            if (OnGetDataAsStringSuccess != null)
+            {
+                OnGetDataAsStringSuccess(this, _data);
+            }
+        }
+
+        private void retrieveArcGISRestString(string url, SCFields fields)
+        {
+            StringBuilder sBuilder = new StringBuilder();
+
+            string encodedComma = "%2C";
+            string _data = string.Empty;
+
+            url = url + "/query?where=OBJECTID+>+0&returnGeometry=true&outFields={0}&f=pjson";
+
+            foreach (Mapping mapping in fields.mappings)
+            {
+                sBuilder.Append(mapping.field_from);
+                sBuilder.Append(encodedComma);
+            }
+            url = string.Format(url, sBuilder.ToString());
 
             using (WebClient client = new WebClient())
             {

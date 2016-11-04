@@ -4,6 +4,7 @@ using ESRI.ArcGIS.Geometry;
 using gbc.Configuration;
 using gbc.Constants;
 using gbc.DAO;
+using gbc.DAO.ArcGISRest;
 using gbc.DAO.Cars;
 using gbc.DAO.DA;
 using gbc.DAO.Trafficwise;
@@ -151,6 +152,13 @@ namespace gbc.DAL
 
                         break;
                     }
+                case DataResponseFormatConstants.ARCGIS_REST:
+                    {
+                        _Retriever.OnGetDataAsStringSuccess += new DAL.DataRetriever.StringHandler(DataRetriever_OnGetDataAsJsonStringSuccess);
+                        _Retriever.GetArcGISRestResponseAsString(this._Container.source, this._Container.Fields);
+
+                        break;
+                    }
             }
         }
 
@@ -212,6 +220,18 @@ namespace gbc.DAL
                         TrafficWiseMessage trafficWiseMessage = TrafficWiseMessage.Parse(jObject);
 
                         GetSpatialRecords(trafficWiseMessage);
+
+                        break;
+                    }
+                case DataResponseFormatConstants.ARCGIS_REST:
+                    {
+                        dynamic json = JsonConvert.DeserializeObject(data);
+
+                        JObject jObject = JObject.Parse(json.ToString());
+
+                        RestMessage restMessage = RestMessage.Parse(jObject);
+
+                        GetSpatialRecords(restMessage);
 
                         break;
                     }
@@ -394,6 +414,35 @@ namespace gbc.DAL
 
 
         #region GeoRecords
+
+        private void GetSpatialRecords(RestMessage restMessage)
+        {
+            try
+            {
+                List<GeoRecord> spatialRecords = new List<GeoRecord>();
+
+                foreach (RestFeature feature in restMessage.Features)
+                {
+                    GeoRecord spatialRecord = CreateRecord(feature, this._Container.Fields);
+
+                    spatialRecords.Add(spatialRecord);
+                }
+
+                if (OnDataRetrievalSuccess != null)
+                {
+                    OnDataRetrievalSuccess(this, spatialRecords);
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message, ex);
+
+                if (OnDataRetrievalError != null)
+                {
+                    OnDataRetrievalError(this, ex);
+                }
+            }
+        }
 
         private void GetSpatialRecords(TrafficWiseMessage trafficWiseMessage)
         {
@@ -766,6 +815,31 @@ namespace gbc.DAL
                 }
 
                 field.Value = propInfo.GetValue(report, null).ToString();
+                spatialRecord.fields.Add(field);
+            }
+
+            spatialRecord.geometry = this._Container.geometry;
+            spatialRecord.uid = MD5Encoder.GetMD5HashId(spatialRecord);
+
+            return spatialRecord;
+        }
+
+        private GeoRecord CreateRecord(RestFeature restFeature, SCFields fields)
+        {
+            GeoRecord spatialRecord = new GeoRecord(this._Container.geometry);
+
+            foreach (Mapping mapping in fields.mappings)
+            {
+                GeoField field = new GeoField(mapping);
+
+                RestAttribute matchingAttribute = restFeature.Attributes.FirstOrDefault(p => p.Key.ToLower() == mapping.field_from.ToLower());
+                
+                if (matchingAttribute == null)
+                {
+                    continue;
+                }
+
+                field.Value = matchingAttribute.Value;
                 spatialRecord.fields.Add(field);
             }
 
