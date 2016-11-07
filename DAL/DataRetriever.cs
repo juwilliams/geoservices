@@ -73,9 +73,9 @@ namespace gbc.DAL
             retrieveString(Url);
         }
 
-        public void GetArcGISRestResponseAsString(string url, SCFields fields)
+        public void GetArcGISRestResponseAsString(string url, string where, SCFields fields)
         {
-            retrieveArcGISRestString(url, fields);
+            retrieveArcGISRestString(url, where, fields);
         }
 
         public void GetResponseAsFile(string Url, string Output)
@@ -254,21 +254,32 @@ namespace gbc.DAL
             }
         }
 
-        private void retrieveArcGISRestString(string url, SCFields fields)
+        private void retrieveArcGISRestString(string url, string where, SCFields fields)
         {
             StringBuilder sBuilder = new StringBuilder();
 
             string encodedComma = "%2C";
-            string _data = string.Empty;
+            string encodedEquals = "%3D";
+            string encodedQuote = "%27";
+            string encodedSpace = "+";
 
-            url = url + "/query?where=OBJECTID+>+0&returnGeometry=true&outFields={0}&f=pjson";
+            string _data = string.Empty;
+            url = url + "/query?where={0}&returnGeometry=true&outFields=*&f=pjson";
 
             foreach (Mapping mapping in fields.mappings)
             {
                 sBuilder.Append(mapping.field_from);
                 sBuilder.Append(encodedComma);
             }
-            url = string.Format(url, sBuilder.ToString());
+
+            if (!string.IsNullOrEmpty(where))
+            {
+                where = where.Replace("'", encodedQuote);
+                where = where.Replace("=", encodedEquals);
+                where = where.Replace(" ", encodedSpace);
+            }
+            url = url.Replace(" ", encodedSpace);
+            url = string.Format(url, where, sBuilder.ToString());
 
             using (WebClient client = new WebClient())
             {

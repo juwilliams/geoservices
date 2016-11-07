@@ -155,7 +155,7 @@ namespace gbc.DAL
                 case DataResponseFormatConstants.ARCGIS_REST:
                     {
                         _Retriever.OnGetDataAsStringSuccess += new DAL.DataRetriever.StringHandler(DataRetriever_OnGetDataAsJsonStringSuccess);
-                        _Retriever.GetArcGISRestResponseAsString(this._Container.source, this._Container.Fields);
+                        _Retriever.GetArcGISRestResponseAsString(this._Container.source, this._Container.where_clause, this._Container.Fields);
 
                         break;
                     }

@@ -177,8 +177,10 @@ namespace gbc.DAL
             try
             {
                 var xmlPayload = GetXmlPayload(record);
-
-                //_log.Info("webeoc board add record..\r\n" + xmlPayload);                
+                if (string.IsNullOrEmpty(xmlPayload))
+                {
+                    return false;
+                }
 
                 APISoapClient api7 = new APISoapClient();
                 WebEOC7.WebEOCCredentials webEoc7Credentials = new WebEOC7.WebEOCCredentials()
@@ -191,8 +193,6 @@ namespace gbc.DAL
                 };
 
                 record.dataid = api7.AddData(webEoc7Credentials, board, inputView, xmlPayload);
-
-                //_log.Info("webeoc board added record!");
 
                 return true;
             }
@@ -228,27 +228,40 @@ namespace gbc.DAL
 
         private string GetXmlPayload(IGeoRecord record, bool includePostedDate = true)
         {
-            var data = new XElement("data");
-
-            if (includePostedDate)
+            try
             {
-                data.Add(new XElement("posted_date", DataUtil.GetWebEOCDateTime()));
-            }
+                var data = new XElement("data");
 
-
-            foreach (var field in record.fields)
-            {
-                if (string.IsNullOrEmpty(field.GetName()))
+                if (includePostedDate)
                 {
-                    continue;
+                    data.Add(new XElement("posted_date", DataUtil.GetWebEOCDateTime()));
                 }
 
-                field.Value = field.Value.Replace(",", "");
+                foreach (var field in record.fields)
+                {
+                    if (string.IsNullOrEmpty(field.GetName()))
+                    {
+                        continue;
+                    }
 
-                data.Add(new XElement(field.GetName(), (field.DataType.ToLower() == "short" || field.DataType.ToLower() == "long") && string.IsNullOrEmpty(field.Value) ? "0" : field.Value));
+                    if (string.IsNullOrEmpty(field.Value))
+                    {
+                        field.Value = "";
+                    }
+
+                    field.Value = field.Value.Replace(",", "");
+
+                    data.Add(new XElement(field.GetName(), (field.DataType.ToLower() == "short" || field.DataType.ToLower() == "long") && string.IsNullOrEmpty(field.Value) ? "0" : field.Value));
+                }
+
+                return data.ToString();
             }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message, ex);
 
-            return data.ToString();
+                return string.Empty;
+            }
         }
 
         private void SetCredentials()
