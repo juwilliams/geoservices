@@ -446,6 +446,12 @@ namespace gbc.DAL
 
         #region ArcObjects Record Manipulation
 
+        public bool UpdateRecord(IGeoRecord record)
+        {
+
+            return false;
+        }
+
         public int InsertRecord(IGeoRecord record)
         {
             if (!m_editSession.IsBeingEdited())

@@ -12,6 +12,7 @@ namespace gbc.DAO
         public string Value { get; set; }
         public string Tags { get; set; }
         public Byte[] Data { get; set; }
+        public bool IsKey { get; set; }
 
         public GeoField()
         {

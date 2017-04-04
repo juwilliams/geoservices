@@ -5,6 +5,7 @@ using gbc.BL;
 using SpatialConnect.Entity;
 using gbc.Interfaces;
 using gbc.DAO;
+using System.Linq;
 
 namespace gbc.DAL
 {
@@ -18,12 +19,14 @@ namespace gbc.DAL
 
         private SDE _sde { get; set; }
         private Config _Config;
+        private Container _Container;
 
         #endregion
 
-        public SDEManager(Config config)
+        public SDEManager(Container container)
         {
-            this._Config = config;
+            this._Config = container.Config;
+            this._Container = container;
         }
 
         public UpdateResult UpdateSDE(string licenseType, string sdeObject, string geometryType, int wkid, List<GeoRecord> records)
@@ -36,9 +39,30 @@ namespace gbc.DAL
                 _sde.Connect(true);
                 _sde.OpenSdeObject();
 
-                updateResult.Affected = UpsertRecords(records);
-                
+                updateResult.Affected = UpsertRecords(records);                
+
                 _sde.Disconnect(true);
+
+                foreach (GeoRecord record in updateResult.Affected)
+                {
+                    Key key =
+                    this._Container.Cache.keys.FirstOrDefault(p => p.internal_id == record.objectid.ToString());
+
+                    if (key == null)
+                    {
+                        key = new Key()
+                        {
+                            internal_id = record.objectid.ToString(),
+                            external_id = record.GetKeyFieldValue(this._Container.key),
+                            field_name = "sde_objectid"
+                        };
+
+                        this._Container.Cache.keys.Add(key);
+
+                        _log.Debug("cache key added: " + key.internal_id);
+                    }
+                    
+                }
             }
             catch (Exception ex)
             {
@@ -71,6 +95,12 @@ namespace gbc.DAL
         private List<GeoRecord> UpsertRecords(List<GeoRecord> records)
         {
             List<GeoRecord> affectedRecords = new List<GeoRecord>();
+            List<GeoRecord> newRecords = records
+                .Where(p => !this._Container.Cache.keys
+                    .Any(x => x.external_id == p.GetKeyFieldValue(this._Container.key))).ToList();
+            List<GeoRecord> updateRecords = records
+                .Where(p => this._Container.Cache.keys
+                    .Any(x => x.external_id == p.GetKeyFieldValue(this._Container.key))).ToList();
 
             foreach (var record in records)
             {

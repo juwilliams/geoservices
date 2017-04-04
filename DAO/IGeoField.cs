@@ -13,6 +13,7 @@ namespace gbc.DAO
         string Length { get; set; }
         string Value { get; set; }
         string Tags { get; set; }
+        bool IsKey { get; set; }
 
         Byte[] Data { get; set; }
 
