@@ -46,7 +46,7 @@ namespace gbc.DAL
                 foreach (GeoRecord record in updateResult.Affected)
                 {
                     Key key =
-                    this._Container.Cache.keys.FirstOrDefault(p => p.internal_id == record.objectid.ToString());
+                        this._Container.Cache.keys.FirstOrDefault(p => p.internal_id == record.objectid.ToString());
 
                     if (key == null)
                     {
@@ -104,11 +104,21 @@ namespace gbc.DAL
 
             foreach (var record in records)
             {
-                record.dataid = _sde.InsertRecord(record);
-
-                if (record.dataid > 0)
+                if (record.objectid > -1)
                 {
-                    affectedRecords.Add(record);
+                    if (_sde.UpdateRecord(record))
+                    {
+                        affectedRecords.Add(record);
+                    }       
+                }
+                else
+                {
+                    record.objectid = _sde.InsertRecord(record);
+
+                    if (record.objectid > 0)
+                    {
+                        affectedRecords.Add(record);
+                    }
                 }
             }
 

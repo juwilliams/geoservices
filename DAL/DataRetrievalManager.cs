@@ -114,7 +114,7 @@ namespace gbc.DAL
                 case DataResponseFormatConstants.ARCGIS:
                     {
                         _Retriever.OnSdeGetDataAsIEnumerableSuccess += new DAL.DataRetriever.ICursorHandler(DataRetriever_OnSdeGetCursorSuccess);
-                        _Retriever.GetICursorFromSde(this._Container.Config, this._Container);
+                        _Retriever.GetICursorFromSde(this._Container);
                         
                         break;
                     }

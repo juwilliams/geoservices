@@ -9,6 +9,7 @@ namespace gbc.Interfaces
     public interface IGeoRecord
     {
         int dataid { get; set; }
+        int objectid { get; set; }
 
         string uid { get; set; }
         string geometry { get; set; }

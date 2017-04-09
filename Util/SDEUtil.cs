@@ -88,6 +88,23 @@ namespace gbc.Util
             }
         }
 
+        public bool UpdateFeature(IFeatureClass featureClass, List<GeoField> fields, string geometry, int objectId)
+        {
+            IQueryFilter2 query = new QueryFilterClass();
+            query.WhereClause = "OBJECTID = '" + objectId + "'";
+            IFeatureCursor updateFeatureCursor = featureClass.Update(query, false);
+            IFeature feature = null;
+
+            while ((feature = updateFeatureCursor.NextFeature()) != null)
+            {
+                //  set feature values;
+
+                updateFeatureCursor.UpdateFeature(feature);
+            }
+
+            return false;
+        }
+
         public int InsertFeature(IFeatureClass featureClass, List<GeoField> fields, string geometry, string uniqueKey)
 		{
 			IFeature _feature = featureClass.CreateFeature();
@@ -207,6 +224,11 @@ namespace gbc.Util
             _row.Store();
             
             return _row.OID;
+        }
+
+        public bool UpdateRow(ITable table, List<GeoField> fields, int objectId)
+        {
+            return false;
         }
 
         public bool DeleteRow(ITable table, string recordId)

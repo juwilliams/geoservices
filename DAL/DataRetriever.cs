@@ -103,9 +103,9 @@ namespace gbc.DAL
             retrievePasswordProtectedFile(credentials, url, output);
         }
 
-        public void GetICursorFromSde(Config config, Container container)
+        public void GetICursorFromSde(Container container)
         {
-            retrieveSDECursor(config, container);
+            retrieveSDECursor(container);
         }
 
         public void GetDamageAssessment()
@@ -127,9 +127,9 @@ namespace gbc.DAL
         /// Retrieves an IEnumerable from SDE
         /// </summary>
         /// <param name="sdeSource"></param>
-        private void retrieveSDECursor(Config config, Container container)
+        private void retrieveSDECursor(Container container)
         {
-            var sdeManager = new SDEManager(config);
+            var sdeManager = new SDEManager(container);
 
             if (OnSdeGetDataAsIEnumerableSuccess != null)
             {

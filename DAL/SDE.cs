@@ -448,8 +448,31 @@ namespace gbc.DAL
 
         public bool UpdateRecord(IGeoRecord record)
         {
+            if (!m_editSession.IsBeingEdited())
+            {
+                m_editSession.StartEditing(true);
+                m_editSession.StartEditOperation();
+            }
 
-            return false;
+            try
+            {
+                if (record.geometry.ToLower() == ApplicationConstants.SDEGeometry.Table)
+                {
+                    return _SdeUtil.UpdateRow(m_table, record.fields, record.objectid);
+                }
+                else
+                {
+                    _SdeUtil.AddMissingFields(record.fields, m_featureClass);
+
+                    return _SdeUtil.UpdateFeature(m_featureClass, record.fields, this._geometryType, record.objectid);
+                }
+            }
+            catch (Exception ex) // TODO: log this exception
+            {
+                Log.Error(ex.Message, ex);
+
+                return false;
+            }
         }
 
         public int InsertRecord(IGeoRecord record)
