@@ -95,14 +95,30 @@ namespace gbc.Util
             IFeatureCursor updateFeatureCursor = featureClass.Update(query, false);
             IFeature feature = null;
 
-            while ((feature = updateFeatureCursor.NextFeature()) != null)
+            try
             {
-                //  set feature values;
+                while ((feature = updateFeatureCursor.NextFeature()) != null)
+                {
+                    //  set feature values;
+                    foreach (var f in fields)
+                    {
+                        if (f.GetName().ToLower() != "coordinates")
+                        {
+                            feature.set_Value(feature.Fields.FindField(f.GetName()), GetTypeSafeValue(f));
+                        }
+                    }
 
-                updateFeatureCursor.UpdateFeature(feature);
+                    updateFeatureCursor.UpdateFeature(feature);
+                }
+
+                return true;
             }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message);
 
-            return false;
+                return false;
+            }
         }
 
         public int InsertFeature(IFeatureClass featureClass, List<GeoField> fields, string geometry, string uniqueKey)
