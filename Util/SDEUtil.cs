@@ -92,6 +92,7 @@ namespace gbc.Util
         {
             IQueryFilter2 query = new QueryFilterClass();
             query.WhereClause = "OBJECTID = '" + objectId + "'";
+
             IFeatureCursor updateFeatureCursor = featureClass.Update(query, false);
             IFeature feature = null;
 
@@ -244,7 +245,36 @@ namespace gbc.Util
 
         public bool UpdateRow(ITable table, List<GeoField> fields, int objectId)
         {
-            return false;
+            IQueryFilter2 query = new QueryFilterClass();
+            query.WhereClause = "OBJECTID = '" + objectId + "'";
+            
+            ICursor updateRowCursor = table.Search(query, false);
+            IRow row = null;
+
+            try
+            {
+                while ((row = updateRowCursor.NextRow()) != null)
+                {
+                    //  set feature values;
+                    foreach (var f in fields)
+                    {
+                        if (f.GetName().ToLower() != "coordinates")
+                        {
+                            row.set_Value(table.FindField(f.GetName()), GetTypeSafeValue(f));
+                        }
+                    }
+
+                    updateRowCursor.UpdateRow(row);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message);
+
+                return false;
+            }
         }
 
         public bool DeleteRow(ITable table, string recordId)
