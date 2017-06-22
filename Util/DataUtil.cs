@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using SpatialConnect.Entity;
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Reflection;
@@ -281,6 +282,37 @@ namespace gbc.Util
         }
 
         /// <summary>
+        /// GZIP utility methods.
+        /// </summary>
+        public static class GZipTool
+        {
+            /// <summary>
+            /// Checks the first two bytes in a GZIP file, which must be 31 and 139.
+            /// </summary>
+            public static bool IsGZipHeader(string filePath)
+            {
+                byte[] gzip = File.ReadAllBytes(filePath);
+
+                return gzip.Length >= 2 &&
+                    gzip[0] == 31 &&
+                    gzip[1] == 139;
+            }
+
+            public static void FixGZipHeader(string filePath)
+            {
+                byte[] gzip = File.ReadAllBytes(filePath);
+
+                if (gzip.Length > 2)
+                {
+                    gzip[0] = 31;
+                    gzip[1] = 139;
+                }
+
+                File.WriteAllBytes(filePath, gzip);
+            }
+        }
+
+        /// <summary>
         /// Unzips a Gzip file containing a tar
         /// </summary>
         /// <param name="file"></param>		
@@ -311,6 +343,8 @@ namespace gbc.Util
 
             using (System.IO.Stream fs = new System.IO.FileStream(gzipFileName, FileMode.Open, FileAccess.Read))
             {
+                fs.Seek(0, SeekOrigin.Begin);
+
                 using (GZipInputStream gzipStream = new GZipInputStream(fs))
                 {
                     // Change this to your needs
@@ -319,6 +353,47 @@ namespace gbc.Util
                     using (System.IO.FileStream fsOut = File.Create(fnOut))
                     {
                         StreamUtils.Copy(gzipStream, fsOut, dataBuffer);
+                    }
+                }
+            }
+        }
+
+        public static void DecompressAndExtractTGZ(string gzipFileName, string tempDir)
+        {
+            //if (!GZipTool.IsGZipHeader(gzipFileName))
+            //{
+            //    GZipTool.FixGZipHeader(gzipFileName);
+            //}
+
+            Stream inStream = File.OpenRead(gzipFileName);
+
+            TarArchive tarArchive = TarArchive.CreateInputTarArchive(inStream);
+            tarArchive.ExtractContents(tempDir);
+            tarArchive.Close();
+
+            inStream.Close();
+        }
+
+        public static void Decompress(string gzipFilePath)
+        {
+            if (!GZipTool.IsGZipHeader(gzipFilePath))
+            {
+                GZipTool.FixGZipHeader(gzipFilePath);
+            }
+
+            FileInfo fileToDecompress = new FileInfo(gzipFilePath);
+
+            using (System.IO.FileStream originalFileStream = fileToDecompress.OpenRead())
+            {
+                string currentFileName = fileToDecompress.FullName;
+                string newFileName = currentFileName.Remove(currentFileName.Length - fileToDecompress.Extension.Length);
+
+                using (System.IO.FileStream decompressedFileStream = File.Create(newFileName))
+                {
+                    using (GZipStream decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
+                    {
+                        decompressionStream.CopyTo(decompressedFileStream);
+                        Console.WriteLine("Decompressed: {0}", fileToDecompress.Name);
                     }
                 }
             }

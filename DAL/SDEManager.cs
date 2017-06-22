@@ -29,7 +29,7 @@ namespace gbc.DAL
             this._Container = container;
         }
 
-        public UpdateResult UpdateSDE(string licenseType, string sdeObject, string geometryType, int wkid, List<GeoRecord> records)
+        public UpdateResult UpdateSDE(string licenseType, string sdeObject, string geometryType, int wkid, bool cleanBeforeUpdate, List<GeoRecord> records)
         {
             UpdateResult updateResult = new UpdateResult();
 
@@ -38,6 +38,15 @@ namespace gbc.DAL
                 _sde = new SDE(_Config, licenseType, sdeObject, geometryType, wkid);
                 _sde.Connect(true);
                 _sde.OpenSdeObject();
+
+                if (cleanBeforeUpdate)
+                {
+                    this.DeleteRecords(this._Container.Cache.keys.Select(p => p.uid), this._Container.key);
+
+                    //  reset the Cache
+                    this._Container.Cache = new Cache();
+                    this._Container.Cache.keys = new List<Key>();
+                }
 
                 updateResult.Affected = UpsertRecords(records);                
 
@@ -54,6 +63,7 @@ namespace gbc.DAL
                         {
                             internal_id = record.objectid.ToString(),
                             external_id = record.GetKeyFieldValue(this._Container.key),
+                            uid = record.uid,
                             field_name = "sde_objectid"
                         };
 
@@ -61,7 +71,6 @@ namespace gbc.DAL
 
                         _log.Debug("cache key added: " + key.internal_id);
                     }
-                    
                 }
             }
             catch (Exception ex)
@@ -95,16 +104,19 @@ namespace gbc.DAL
         private List<GeoRecord> UpsertRecords(List<GeoRecord> records)
         {
             List<GeoRecord> affectedRecords = new List<GeoRecord>();
+
             List<GeoRecord> newRecords = records
                 .Where(p => !this._Container.Cache.keys
                     .Any(x => x.external_id == p.GetKeyFieldValue(this._Container.key))).ToList();
+
+            //  locate records from the records list that don't exist in the newRecords list to produce records that must be an update
             List<GeoRecord> updateRecords = records
-                .Where(p => this._Container.Cache.keys
-                    .Any(x => x.external_id == p.GetKeyFieldValue(this._Container.key))).ToList();
+                .Where(r => !newRecords
+                    .Any(n => n.GetKeyFieldValue(this._Container.key) == r.GetKeyFieldValue(this._Container.key))).ToList();
 
             foreach (var record in records)
             {
-                if (record.objectid > -1)
+                if (record.objectid > 0)
                 {
                     if (_sde.UpdateRecord(record))
                     {
@@ -126,13 +138,13 @@ namespace gbc.DAL
             return affectedRecords;
         }
 
-        private List<string> DeleteRecords(IEnumerable<string> recordKeys)
+        private List<string> DeleteRecords(IEnumerable<string> recordKeys, string keyField)
         {
             var removedRecordKeys = new List<string>();
 
             foreach (var key in recordKeys)
             {
-                if (_sde.DeleteRecord(key))
+                if (_sde.DeleteRecord(keyField, key))
                 {
                     removedRecordKeys.Add(key);
                 }

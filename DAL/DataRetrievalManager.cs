@@ -371,7 +371,7 @@ namespace gbc.DAL
             SDE.CheckInLicense();
         }
 
-        private void DataRetriever_OnGetGzippedTarShapeFile(object sender, string downloadedFileName)
+        private void DataRetriever_OnGetGzippedTarShapeFile(object sender, string downloadedFilePath)
         {
             if (string.IsNullOrEmpty(this._Container.file_in_archive))
             {
@@ -383,7 +383,7 @@ namespace gbc.DAL
                 return;
             }
             
-            if (string.IsNullOrEmpty(downloadedFileName))
+            if (string.IsNullOrEmpty(downloadedFilePath))
             {
                 if (OnDataRetrievalError != null)
                 {
@@ -395,8 +395,9 @@ namespace gbc.DAL
 
             SDE.BindLicense(this._Container.license_type);
 
-            DataUtil.DecompressTar(downloadedFileName, this._Container.Config.app_path + "\\" + this._Container.name + "\\temp\\");
-            DataUtil.ExtractTar(downloadedFileName, this._Container.Config.app_path + "\\" + this._Container.name + "\\temp\\");
+            //DataUtil.DecompressTar(downloadedFilePath, this._Container.Config.app_path + "\\" + this._Container.name + "\\temp\\");
+            //DataUtil.ExtractTar(downloadedFilePath, this._Container.Config.app_path + "\\" + this._Container.name + "\\temp\\");
+            DataUtil.DecompressAndExtractTGZ(downloadedFilePath, this._Container.Config.app_path + "\\" + this._Container.name + "\\temp\\");
 
             IFeatureCursor shapeFeatureCursor = SDEManager.GetFeatureCursorFromShapefile(this._Container.file_in_archive, this._Container.Config.app_path + "\\" + this._Container.name + "\\temp\\", this._Container.where_clause);
 

@@ -141,7 +141,10 @@ namespace gbc.DAL
         {
             if (m_licenseCheckedOut)
             {
-                m_license.ShutdownApplication();
+                if (m_license != null)
+                {
+                    m_license.ShutdownApplication();
+                }
             }
         }
 
@@ -504,7 +507,7 @@ namespace gbc.DAL
             }
         }
         
-        public bool DeleteRecord(string recordUniqueKey)
+        public bool DeleteRecord(string keyField, string keyValue)
         {
             //	ensure that an edit operation is in effect
             if (!m_editSession.IsBeingEdited())
@@ -516,11 +519,11 @@ namespace gbc.DAL
             //	open the featureclass if it isnt already open
             if (_geometryType.ToLower() == ApplicationConstants.SDEGeometry.Table)
             {
-                return _SdeUtil.DeleteRow(m_table, recordUniqueKey);
+                return _SdeUtil.DeleteRow(m_table, keyValue, keyField);
             }
             else
             {
-                return _SdeUtil.DeleteFeature(m_featureClass, recordUniqueKey);
+                return _SdeUtil.DeleteFeature(m_featureClass, keyValue, keyField);
             }
         }
 

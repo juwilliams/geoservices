@@ -13,7 +13,7 @@ namespace gbc.Constants
         }
         public static class QueryFormat
         {
-            public const string SELECT_OBJECTIDS_FROM_TABLE = "SELECT UKEY FROM dbo.{0}";
+            public const string SELECT_OBJECTIDS_FROM_TABLE = "SELECT uid FROM dbo.{0}";
             public const string SELECT_NEXT_OBJECTID_FOR_TABLE = "DECLARE @id as integer EXEC dbo.next_rowid '{0}', '{1}', @id OUTPUT; SELECT @id '" + QueryReturns.NEXT_OBJECTID + "';";
         }
         public static class STGeometryFormat

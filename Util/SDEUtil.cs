@@ -144,7 +144,7 @@ namespace gbc.Util
                     }
                 }
 
-                _feature.set_Value(_feature.Fields.FindField("UKEY"), uniqueKey);
+                _feature.set_Value(_feature.Fields.FindField("uid"), uniqueKey);
 
                 _feature.Store();
 
@@ -160,14 +160,14 @@ namespace gbc.Util
             }
 		}
 
-        public bool DeleteFeature(IFeatureClass featureClass, string recordId)
+        public bool DeleteFeature(IFeatureClass featureClass, string keyValue, string keyField)
         {
             try
             {
-                if (featureClass.Fields.FindField("UKEY") > -1)
+                if (featureClass.Fields.FindField(keyField) > -1)
                 {
                     IQueryFilter2 _query = new QueryFilterClass();
-                    _query.WhereClause = "UKEY = '" + recordId + "'";
+                    _query.WhereClause = keyField + " = '" + keyValue + "'";
                     IFeatureCursor _fCursor = featureClass.Update(_query, false);
                     IFeature _feature = null;
 
@@ -181,6 +181,8 @@ namespace gbc.Util
             }
             catch (Exception ex) // TODO: log this exception
             {
+                Console.WriteLine(ex.Message);
+
                 return false;
             }
 
@@ -228,7 +230,7 @@ namespace gbc.Util
                     }
                 }
 
-                _row.set_Value(_row.Fields.FindField("UKEY"), uniqueKey);
+                _row.set_Value(_row.Fields.FindField("uid"), uniqueKey);
             }
             catch (Exception ex) // TODO: log this error
             {
@@ -277,15 +279,15 @@ namespace gbc.Util
             }
         }
 
-        public bool DeleteRow(ITable table, string recordId)
+        public bool DeleteRow(ITable table, string keyValue, string keyField)
         {
             try
             {
                 //  locate the RECORD_ID
-                if (table.Fields.FindField("UKEY") > -1)
+                if (table.Fields.FindField(keyField) > -1)
                 {
                     IQueryFilter _query = new QueryFilterClass();
-                    _query.WhereClause = "UKEY = '" + recordId + "'";
+                    _query.WhereClause = keyField + " = '" + keyValue + "'";
                     
                     table.DeleteSearchedRows(_query);
                     
@@ -294,6 +296,8 @@ namespace gbc.Util
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
+
                 return false;
             }
 
@@ -635,7 +639,7 @@ namespace gbc.Util
             //  create the Unique Key Field
             _field = new FieldClass();
             _fieldEdit = (IFieldEdit2)_field;
-            _fieldEdit.Name_2 = "UKEY";
+            _fieldEdit.Name_2 = "uid";
             _fieldEdit.AliasName_2 = "Unique Key";
             _fieldEdit.Type_2 = esriFieldType.esriFieldTypeString;
             _fieldsEdit.set_Field(1, _field);
