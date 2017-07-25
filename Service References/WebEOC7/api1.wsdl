@@ -21,7 +21,6 @@
           <s:element minOccurs="0" maxOccurs="1" name="Username" type="s:string" />
           <s:element minOccurs="0" maxOccurs="1" name="Password" type="s:string" />
           <s:element minOccurs="0" maxOccurs="1" name="Position" type="s:string" />
-          <s:element minOccurs="0" maxOccurs="1" name="Jurisdiction" type="s:string" />
           <s:element minOccurs="0" maxOccurs="1" name="Incident" type="s:string" />
         </s:sequence>
       </s:complexType>
@@ -1247,7 +1246,7 @@
       <wsdl:output message="tns:PostStandardDataSoapOut" />
     </wsdl:operation>
     <wsdl:operation name="GetIncidents">
-      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Get the list of incidents that a specific user has access to.</wsdl:documentation>
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Get the list of active incidents that a specific user has access to.</wsdl:documentation>
       <wsdl:input message="tns:GetIncidentsSoapIn" />
       <wsdl:output message="tns:GetIncidentsSoapOut" />
     </wsdl:operation>

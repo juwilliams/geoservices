@@ -366,26 +366,12 @@ namespace gbc.DAL
             WebEOC7.WebEOCCredentials webEoc7Credentials = new WebEOC7.WebEOCCredentials()
             {
                 Incident = credentials.Incident,
-                Jurisdiction = credentials.Jurisdiction,
                 Password = credentials.Password,
                 Position = credentials.Position,
                 Username = credentials.Username
             };
 
             string response = client.GetData(webEoc7Credentials, board, view);
-
-            //var api = new API();
-
-            //string response = api.GetData(credentials, board, view);
-
-            //response = response.Replace("\n", " ");
-            //response = response.Replace("&#xD;", " ");
-            //response = response.Replace("&#xA;", " ");
-            //response = response.Replace("&quot;", " ");
-            //response = response.Replace("&#x0;", " ");
-            //response = response.Replace("\0", " ");
-
-            //_log.Debug(string.Format("Got WebEOC Response: {0}", response));
 
             if (response != null && !String.IsNullOrEmpty(response))
             {

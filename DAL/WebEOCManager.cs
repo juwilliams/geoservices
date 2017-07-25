@@ -110,7 +110,6 @@ namespace gbc.DAL
                 WebEOC7.WebEOCCredentials credentials = new WebEOC7.WebEOCCredentials()
                 {
                     Incident = this.credentials.Incident,
-                    Jurisdiction = this.credentials.Jurisdiction,
                     Password = this.credentials.Password,
                     Username = this.credentials.Username,
                     Position = this.credentials.Position
@@ -186,7 +185,6 @@ namespace gbc.DAL
                 WebEOC7.WebEOCCredentials webEoc7Credentials = new WebEOC7.WebEOCCredentials()
                 {
                     Incident = credentials.Incident,
-                    Jurisdiction = credentials.Jurisdiction,
                     Password = credentials.Password,
                     Position = credentials.Position,
                     Username = credentials.Username
@@ -268,7 +266,6 @@ namespace gbc.DAL
         {
             this.credentials = new WebEOCCredentials();
             this.credentials.Incident = _Config.webeoc_incident;
-            this.credentials.Jurisdiction = _Config.webeoc_jurisdiction;
             this.credentials.Password = _Config.webeoc_password;
             this.credentials.Position = _Config.webeoc_position;
             this.credentials.Username = _Config.webeoc_username;

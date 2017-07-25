@@ -20,7 +20,7 @@
     <ServiceContractMappings />
   </ClientOptions>
   <MetadataSources>
-    <MetadataSource Address="https://webeoc.in.gov/eoc7/api.asmx" Protocol="http" SourceId="1" />
+    <MetadataSource Address="http://webeoc.in.gov/eoc7/api.asmx" Protocol="http" SourceId="1" />
   </MetadataSources>
   <Metadata>
     <MetadataFile FileName="api1.wsdl" MetadataType="Wsdl" ID="6f9850a1-fde9-494e-ad16-922a68b276fc" SourceId="1" SourceUrl="https://webeoc.in.gov/eoc7/api.asmx?wsdl" />

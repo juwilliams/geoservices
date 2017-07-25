@@ -29,49 +29,24 @@ namespace gbc.DAL
             this._Container = container;
         }
 
-        public UpdateResult UpdateSDE(string licenseType, string sdeObject, string geometryType, int wkid, bool cleanBeforeUpdate, List<GeoRecord> records)
+        public UpdateResult UpdateSDE(string licenseType, string sdeObject, string geometryType, int wkid, List<GeoRecord> records)
         {
             UpdateResult updateResult = new UpdateResult();
 
             try
             {
+                if (records.Count < 1)
+                {
+                    return updateResult;
+                }
+
                 _sde = new SDE(_Config, licenseType, sdeObject, geometryType, wkid);
                 _sde.Connect(true);
                 _sde.OpenSdeObject();
 
-                if (cleanBeforeUpdate)
-                {
-                    this.DeleteRecords(this._Container.Cache.keys.Select(p => p.uid), this._Container.key);
-
-                    //  reset the Cache
-                    this._Container.Cache = new Cache();
-                    this._Container.Cache.keys = new List<Key>();
-                }
-
                 updateResult.Affected = UpsertRecords(records);                
 
                 _sde.Disconnect(true);
-
-                foreach (GeoRecord record in updateResult.Affected)
-                {
-                    Key key =
-                        this._Container.Cache.keys.FirstOrDefault(p => p.internal_id == record.objectid.ToString());
-
-                    if (key == null)
-                    {
-                        key = new Key()
-                        {
-                            internal_id = record.objectid.ToString(),
-                            external_id = record.GetKeyFieldValue(this._Container.key),
-                            uid = record.uid,
-                            field_name = "sde_objectid"
-                        };
-
-                        this._Container.Cache.keys.Add(key);
-
-                        _log.Debug("cache key added: " + key.internal_id);
-                    }
-                }
             }
             catch (Exception ex)
             {
@@ -105,23 +80,16 @@ namespace gbc.DAL
         {
             List<GeoRecord> affectedRecords = new List<GeoRecord>();
 
-            List<GeoRecord> newRecords = records
-                .Where(p => !this._Container.Cache.keys
-                    .Any(x => x.external_id == p.GetKeyFieldValue(this._Container.key))).ToList();
-
-            //  locate records from the records list that don't exist in the newRecords list to produce records that must be an update
-            List<GeoRecord> updateRecords = records
-                .Where(r => !newRecords
-                    .Any(n => n.GetKeyFieldValue(this._Container.key) == r.GetKeyFieldValue(this._Container.key))).ToList();
-
-            foreach (var record in records)
+            foreach (GeoRecord record in records)
             {
                 if (record.objectid > 0)
                 {
-                    if (_sde.UpdateRecord(record))
+                    bool wasUpdated = _sde.UpdateRecord(record);
+
+                    if (wasUpdated)
                     {
                         affectedRecords.Add(record);
-                    }       
+                    }
                 }
                 else
                 {

@@ -105,7 +105,19 @@ namespace gbc.Util
                     {
                         if (f.GetName().ToLower() != "coordinates")
                         {
-                            feature.set_Value(feature.Fields.FindField(f.GetName()), GetTypeSafeValue(f));
+                            int fieldIndex = feature.Fields.FindField(f.GetName());
+
+                            if (fieldIndex < 0)
+                            {
+                                if (AddMissingField(f, featureClass))
+                                {
+                                    feature.set_Value(fieldIndex, GetTypeSafeValue(f));
+                                }
+                            }
+                            else
+                            {
+                                feature.set_Value(fieldIndex, GetTypeSafeValue(f));
+                            }
                         }
                     }
 
@@ -250,7 +262,7 @@ namespace gbc.Util
             IQueryFilter2 query = new QueryFilterClass();
             query.WhereClause = "OBJECTID = '" + objectId + "'";
             
-            ICursor updateRowCursor = table.Search(query, false);
+            ICursor updateRowCursor = table.Update(query, false);
             IRow row = null;
 
             try
@@ -262,7 +274,19 @@ namespace gbc.Util
                     {
                         if (f.GetName().ToLower() != "coordinates")
                         {
-                            row.set_Value(table.FindField(f.GetName()), GetTypeSafeValue(f));
+                            int fieldIndex = table.FindField(f.GetName());
+
+                            if (fieldIndex < 0)
+                            {
+                                if(AddMissingField(f, table))
+                                {
+                                    row.set_Value(table.FindField(f.GetName()), GetTypeSafeValue(f));
+                                }
+                            }
+                            else
+                            {
+                                row.set_Value(fieldIndex, GetTypeSafeValue(f));
+                            }
                         }
                     }
 
@@ -296,7 +320,7 @@ namespace gbc.Util
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                _log.Error(ex.Message);
 
                 return false;
             }
@@ -328,6 +352,49 @@ namespace gbc.Util
                 _query.WhereClause = "RECORD_ID IS NULL";
                 ICursor _rowCursor = table.Search(_query, false);
                 table.DeleteSearchedRows(_query);
+            }
+        }
+
+        public bool CleanFeatureClass(IFeatureClass featureClass)
+        {
+            try
+            {
+                IQueryFilter query = new QueryFilterClass();
+                query.WhereClause = "OBJECTID > 0";
+                IFeatureCursor fCursor = featureClass.Update(query, false);
+                IFeature feature = null;
+
+                while ((feature = fCursor.NextFeature()) != null)
+                {
+                    fCursor.DeleteFeature();
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message);
+
+                return false;
+            }
+        }
+
+        public bool CleanTable(ITable table)
+        {
+            try
+            {
+                IQueryFilter _query = new QueryFilterClass();
+                _query.WhereClause = "OBJECTID > 0";
+                ICursor _rowCursor = table.Search(_query, false);
+                table.DeleteSearchedRows(_query);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message);
+
+                return false;
             }
         }
 
@@ -723,35 +790,123 @@ namespace gbc.Util
         #region Field Helpers
 
         //	creates all missing fields prior to attempting to input data on featureclass
-        public void AddMissingFields(List<GeoField> fields, IFeatureClass featureClass)
+        public bool AddMissingField(GeoField field, IFeatureClass featureClass)
         {
-            if (fields == null ||
-                    featureClass == null)
-            {
-                return;
-            }
+            bool added = false;
+            ISchemaLock schemaLock = (ISchemaLock)featureClass;
 
-            foreach (var field in fields)
+            try
             {
+                schemaLock.ChangeSchemaLock(esriSchemaLock.esriExclusiveSchemaLock);
+
                 if (featureClass.FindField(field.GetName()) < 0 && field.GetName() != ApplicationConstants.ReservedFieldNames.Coordinates)
                 {
                     featureClass.AddField(CreateIField(field));
                 }
+
+                added = true;
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message, ex);
+            }
+            finally
+            {
+                schemaLock.ChangeSchemaLock(esriSchemaLock.esriSharedSchemaLock);
+            }
+
+            return added;
+        }
+
+        //	creates all missing fields prior to attempting to input data on featureclass
+        public bool AddMissingField(GeoField field, ITable table)
+        {
+            bool added = false;
+            ISchemaLock schemaLock = (ISchemaLock)table;
+
+            try
+            {
+                schemaLock.ChangeSchemaLock(esriSchemaLock.esriExclusiveSchemaLock);
+
+                if (table.FindField(field.GetName()) < 0 && field.GetName() != ApplicationConstants.ReservedFieldNames.Coordinates)
+                {
+                    table.AddField(CreateIField(field));
+                }
+
+                added = true;
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message, ex);
+            }
+            finally
+            {
+                schemaLock.ChangeSchemaLock(esriSchemaLock.esriSharedSchemaLock);
+            }
+
+            return added;
+        }
+
+        //	creates all missing fields prior to attempting to input data on featureclass
+        public void AddMissingFields(List<GeoField> fields, IFeatureClass featureClass)
+        {
+            ISchemaLock schemaLock = (ISchemaLock)featureClass;
+
+            try
+            {
+                schemaLock.ChangeSchemaLock(esriSchemaLock.esriExclusiveSchemaLock);
+
+                if (fields == null ||
+                    featureClass == null)
+                {
+                    return;
+                }
+
+                foreach (var field in fields)
+                {
+                    if (featureClass.FindField(field.GetName()) < 0 && field.GetName() != ApplicationConstants.ReservedFieldNames.Coordinates)
+                    {
+                        featureClass.AddField(CreateIField(field));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message, ex);
+            }
+            finally
+            {
+                schemaLock.ChangeSchemaLock(esriSchemaLock.esriSharedSchemaLock);
             }
         }
 
         //  creates all missing fields prior to attempting to input data on table
         public void AddMissingFields(List<GeoField> fields, ITable table)
         {
-            foreach (var field in fields)
+            ISchemaLock schemaLock = (ISchemaLock)table;
+            
+            try
             {
-                //  truncate field names larger than 19 characters
-                field.Name = field.GetName().Length > 19 ? field.GetName().Substring(0, 18) : field.GetName();
+                schemaLock.ChangeSchemaLock(esriSchemaLock.esriExclusiveSchemaLock);
 
-                if (table.FindField(field.GetName()) < 0 && field.GetName() != ApplicationConstants.ReservedFieldNames.Coordinates)
+                foreach (var field in fields)
                 {
-                    table.AddField(CreateIField(field));
+                    //  truncate field names larger than 19 characters
+                    field.Name = field.GetName().Length > 19 ? field.GetName().Substring(0, 18) : field.GetName();
+
+                    if (table.FindField(field.GetName()) < 0 && field.GetName() != ApplicationConstants.ReservedFieldNames.Coordinates)
+                    {
+                        table.AddField(CreateIField(field));
+                    }
                 }
+            }
+            catch(Exception ex)
+            {
+                _log.Error(ex.Message, ex);
+            }
+            finally
+            {
+                schemaLock.ChangeSchemaLock(esriSchemaLock.esriSharedSchemaLock);
             }
         }
 

@@ -678,6 +678,13 @@ namespace gbc.DAL
                     }
 
                     record.fields.Add(field);
+
+                    //  set the key for this record if the mapping for the key is the same as the current field mapping
+                    if (this._Container.use_relationships &&
+                            this._Container.key.ToLower() == mapping.field_from.ToLower())
+                    {
+                        record.id = field.Value;
+                    }
                 }
             }
 
@@ -764,6 +771,13 @@ namespace gbc.DAL
 
                     recordField.Value = xmlMatch.Value;
                     spatialRecord.fields.Add(recordField);
+
+                    //  set the key for this record if the mapping for the key is the same as the current field mapping
+                    if (this._Container.use_relationships &&
+                            this._Container.key.ToLower() == mapping.field_from.ToLower())
+                    {
+                        spatialRecord.id = recordField.Value;
+                    }
                 }
             }
 
@@ -791,6 +805,13 @@ namespace gbc.DAL
 
                 field.Value = propInfo.GetValue(incidentRecord, null).ToString();
                 spatialRecord.fields.Add(field);
+
+                //  set the key for this record if the mapping for the key is the same as the current field mapping
+                if (this._Container.use_relationships &&
+                        this._Container.key.ToLower() == mapping.field_from.ToLower())
+                {
+                    spatialRecord.id = field.Value;
+                }
             }
 
             spatialRecord.geometry = this._Container.geometry;
@@ -817,6 +838,13 @@ namespace gbc.DAL
 
                 field.Value = propInfo.GetValue(report, null).ToString();
                 spatialRecord.fields.Add(field);
+
+                //  set the key for this record if the mapping for the key is the same as the current field mapping
+                if (this._Container.use_relationships &&
+                        this._Container.key.ToLower() == mapping.field_from.ToLower())
+                {
+                    spatialRecord.id = field.Value;
+                }
             }
 
             spatialRecord.geometry = this._Container.geometry;
@@ -842,6 +870,13 @@ namespace gbc.DAL
 
                 field.Value = matchingAttribute.Value;
                 spatialRecord.fields.Add(field);
+
+                //  set the key for this record if the mapping for the key is the same as the current field mapping
+                if (this._Container.use_relationships &&
+                        this._Container.key.ToLower() == mapping.field_from.ToLower())
+                {
+                    spatialRecord.id = field.Value;
+                }
             }
 
             spatialRecord.geometry = this._Container.geometry;
@@ -946,7 +981,6 @@ namespace gbc.DAL
             return new WebEOCCredentials()
             {
                 Incident = this._Container.Config.webeoc_incident,
-                Jurisdiction = this._Container.Config.webeoc_jurisdiction,
                 Password = this._Container.Config.webeoc_password,
                 Position = this._Container.Config.webeoc_position,
                 Username = this._Container.Config.webeoc_username

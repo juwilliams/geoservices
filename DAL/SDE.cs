@@ -460,13 +460,11 @@ namespace gbc.DAL
             try
             {
                 if (record.geometry.ToLower() == ApplicationConstants.SDEGeometry.Table)
-                {
+                {                    
                     return _SdeUtil.UpdateRow(m_table, record.fields, record.objectid);
                 }
                 else
                 {
-                    _SdeUtil.AddMissingFields(record.fields, m_featureClass);
-
                     return _SdeUtil.UpdateFeature(m_featureClass, record.fields, this._geometryType, record.objectid);
                 }
             }
@@ -536,6 +534,26 @@ namespace gbc.DAL
             }
 
             _SdeUtil.DeleteNullFeatures(m_featureClass);
+        }
+
+        public bool CleanRecords()
+        {
+            //	ensure that an edit operation is in effect
+            if (!m_editSession.IsBeingEdited())
+            {
+                m_editSession.StartEditing(true);
+                m_editSession.StartEditOperation();
+            }
+
+            //	open the featureclass if it isnt already open
+            if (_geometryType.ToLower() == ApplicationConstants.SDEGeometry.Table)
+            {
+                return _SdeUtil.CleanTable(m_table);
+            }
+            else
+            {
+                return _SdeUtil.CleanFeatureClass(m_featureClass);
+            }
         }
 
         #endregion
