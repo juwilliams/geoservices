@@ -150,6 +150,12 @@ namespace gbc.Util
                 //	set the field values avoiding coordinates field as that should never be included
                 foreach (var f in fields)
                 {
+                    //  don't allow attempts to modify objectid field (this is disallowed)
+                    if (f.GetName().ToLower() == "objectid")
+                    {
+                        continue;
+                    }
+
                     if (f.GetName().ToLower() != "coordinates")
                     {
                         _feature.set_Value(_feature.Fields.FindField(f.GetName()), GetTypeSafeValue(f));
@@ -464,8 +470,10 @@ namespace gbc.Util
 
             string coordinates = coordsField.Value;
 
-            coordinates = coordinates.Replace("\n", " ");
+            coordinates = coordinates.Replace("\r", "");
+            coordinates = coordinates.Replace("\n", "");
             coordinates = coordinates.Replace("\t", "");
+            coordinates = coordinates.Replace(" ", "");
 
             FillPoly('|', poly, ptCollection, ref missing, coordinates);
 
@@ -1034,6 +1042,12 @@ namespace gbc.Util
                     {
                         short z;
                         return short.TryParse(f.Value, out z) ? z : default(short);
+                    }
+                case esriFieldType.esriFieldTypeDate:
+                    {
+                        DateTime date;
+
+                        return DateTime.TryParse(f.Value, out date) ? date : DateTime.MinValue;
                     }
             }
         }

@@ -151,7 +151,6 @@
     <Compile Include="Util\SDEUtil.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="Properties\DataSources\System.Data.DataTable.datasource" />
     <None Include="Service References\WebEOC7\api.wsdl" />

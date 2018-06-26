@@ -861,14 +861,23 @@ namespace gbc.DAL
             {
                 GeoField field = new GeoField(mapping);
 
-                RestAttribute matchingAttribute = restFeature.Attributes.FirstOrDefault(p => p.Key.ToLower() == mapping.field_from.ToLower());
-                
-                if (matchingAttribute == null)
+                //  includes a coordinates field in the output if one is included and tagged as generated
+                if (field.Name == "coordinates" && field.Tags.Contains("generated") && !string.IsNullOrEmpty(restFeature.Geometry.Ring))
                 {
-                    continue;
+                    field.Value = restFeature.Geometry.Ring;
+                }
+                else
+                {
+                    RestAttribute matchingAttribute = restFeature.Attributes.FirstOrDefault(p => p.Key.ToLower() == mapping.field_from.ToLower());
+
+                    if (matchingAttribute == null)
+                    {
+                        continue;
+                    }
+
+                    field.Value = matchingAttribute.Value;
                 }
 
-                field.Value = matchingAttribute.Value;
                 spatialRecord.fields.Add(field);
 
                 //  set the key for this record if the mapping for the key is the same as the current field mapping
