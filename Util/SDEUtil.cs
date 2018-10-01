@@ -1013,6 +1013,11 @@ namespace gbc.Util
                 case esriFieldType.esriFieldTypeString:
                 default:
                     {
+                        if (string.IsNullOrEmpty(f.Value))
+                        {
+                            return string.Empty;
+                        }
+
                         int maxLength;
 
                         if (int.TryParse(f.Length, out maxLength) &&
