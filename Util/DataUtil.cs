@@ -360,18 +360,21 @@ namespace gbc.Util
 
         public static void DecompressAndExtractTGZ(string gzipFileName, string tempDir)
         {
-            //if (!GZipTool.IsGZipHeader(gzipFileName))
-            //{
-            //    GZipTool.FixGZipHeader(gzipFileName);
-            //}
+            if (!GZipTool.IsGZipHeader(gzipFileName))
+            {
+                GZipTool.FixGZipHeader(gzipFileName);
+            }
 
-            Stream inStream = File.OpenRead(gzipFileName);
-
-            TarArchive tarArchive = TarArchive.CreateInputTarArchive(inStream);
-            tarArchive.ExtractContents(tempDir);
-            tarArchive.Close();
-
-            inStream.Close();
+            using (Stream inStream = File.OpenRead(gzipFileName))
+            {
+                using (Stream gzipStream = new GZipInputStream(inStream))
+                {
+                    TarArchive tarArchive = TarArchive.CreateInputTarArchive(gzipStream);
+                    //File.SetLastWriteTimeUtc(newFileName, fileToDecompress.LastWriteTimeUtc);
+                    tarArchive.ExtractContents(tempDir);
+                    tarArchive.Close();
+                }
+            }
         }
 
         public static void Decompress(string gzipFilePath)

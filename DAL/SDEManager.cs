@@ -40,8 +40,11 @@ namespace gbc.DAL
                     return updateResult;
                 }
 
+                bool isFileGeodatabase = _Config.arcgis_database.Contains(".gdb");
+                bool withEdits = true;
+
                 _sde = new SDE(_Config, licenseType, sdeObject, geometryType, wkid);
-                _sde.Connect(true);
+                _sde.Connect(withEdits, isFileGeodatabase);
                 _sde.OpenSdeObject();
 
                 updateResult.Affected = UpsertRecords(records);                
@@ -61,8 +64,10 @@ namespace gbc.DAL
 
         public ICursor GetCursor(string licenseType, string sourceObj, string whereClause)
         {
+            bool isFileGeodatabase = _Config.arcgis_instance.Contains(".gdb");
+
             _sde = new SDE(this._Config, licenseType, sourceObj, string.Empty, 0);
-            _sde.Connect(false);
+            _sde.Connect(false, isFileGeodatabase);
 
             ICursor cursor = _sde.GetSearchCursor(whereClause);
 
@@ -79,6 +84,11 @@ namespace gbc.DAL
         private List<GeoRecord> UpsertRecords(List<GeoRecord> records)
         {
             List<GeoRecord> affectedRecords = new List<GeoRecord>();
+
+            //  add missing fields
+            _sde.AddMissingFields(records[0]);
+
+            _sde.StartEditing();
 
             foreach (GeoRecord record in records)
             {

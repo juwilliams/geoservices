@@ -395,8 +395,6 @@ namespace gbc.DAL
 
             SDE.BindLicense(this._Container.license_type);
 
-            //DataUtil.DecompressTar(downloadedFilePath, this._Container.Config.app_path + "\\" + this._Container.name + "\\temp\\");
-            //DataUtil.ExtractTar(downloadedFilePath, this._Container.Config.app_path + "\\" + this._Container.name + "\\temp\\");
             DataUtil.DecompressAndExtractTGZ(downloadedFilePath, this._Container.Config.app_path + "\\" + this._Container.name + "\\temp\\");
 
             IFeatureCursor shapeFeatureCursor = SDEManager.GetFeatureCursorFromShapefile(this._Container.file_in_archive, this._Container.Config.app_path + "\\" + this._Container.name + "\\temp\\", this._Container.where_clause);

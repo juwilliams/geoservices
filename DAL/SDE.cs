@@ -42,7 +42,6 @@ namespace gbc.DAL
         private string _geometryType { get; set; }
         private static readonly log4net.ILog Log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private static List<string> _existingRecordIds;
-        private SqlConnection _sqlConnection;
 
         #endregion
 
@@ -153,20 +152,21 @@ namespace gbc.DAL
 
         #region Connection Management
 
-        public void Connect(bool withEdits)
+        //  TODO: modify connect to allow connection to file geodatabases
+        public void Connect(bool withEdits, bool isFileGeodatabase)
         {
             BindLicense(_licenseType);
 
             //	open the workspace
-            m_workspaceFactory = (IWorkspaceFactory2)new SdeWorkspaceFactory();
-            m_workspace = m_workspaceFactory.Open(_DataUtil.GetPropertySet(_Config), 0);
-
-            if (withEdits)
+            if (isFileGeodatabase)
             {
-                //	start the edit session on the workspace
-                m_editSession = (IWorkspaceEdit2)m_workspace;
-                m_editSession.StartEditing(false);
-                m_editSession.StartEditOperation();
+                m_workspaceFactory = new FileGDBWorkspaceFactory();
+                m_workspace = m_workspaceFactory.OpenFromFile(string.Format("{0}\\{1}", _Config.arcgis_instance, _Config.arcgis_database), 0);
+            }
+            else
+            {
+                m_workspaceFactory = (IWorkspaceFactory2)new SdeWorkspaceFactory();
+                m_workspace = m_workspaceFactory.Open(_DataUtil.GetPropertySet(_Config), 0);
             }
 
             Log.Info("SDE Connection opened");
@@ -174,23 +174,7 @@ namespace gbc.DAL
 
         public void Disconnect(bool saveEdits)
         {
-            if (m_editSession != null && m_editSession.IsBeingEdited())
-            {
-                //	stop the edit operation, save edits and stop editing
-                m_editSession.StopEditOperation();
-
-                //	stop editing
-                try
-                {
-                    m_editSession.StopEditing(saveEdits);
-                }
-                catch
-                {
-                    var versionEdit = (IVersionEdit)m_editSession;
-                    versionEdit.Reconcile(_Config.arcgis_version);
-                    m_editSession.StopEditing(saveEdits);
-                }
-            }
+            StopEditing(saveEdits);
 
             CheckInLicense();
 
@@ -203,6 +187,11 @@ namespace gbc.DAL
 
 
         #region Sde Helpers
+
+        public void AddMissingFields(IGeoRecord record)
+        {
+            _SdeUtil.AddMissingFields(record.fields, m_featureClass);
+        }
 
         public int GetNextObjectID(string schema = "dbo")
         {
@@ -444,6 +433,39 @@ namespace gbc.DAL
             }
         }
 
+        public void StartEditing()
+        {
+            Log.Info("Edit session started!");
+
+            //	start the edit session on the workspace
+            m_editSession = (IWorkspaceEdit2)m_workspace;
+            m_editSession.StartEditing(false);
+            m_editSession.StartEditOperation();
+        }
+
+        public void StopEditing(bool saveEdits)
+        {
+            if (m_editSession != null && m_editSession.IsBeingEdited())
+            {
+                //	stop the edit operation, save edits and stop editing
+                m_editSession.StopEditOperation();
+
+                //	stop editing
+                try
+                {
+                    m_editSession.StopEditing(saveEdits);
+                }
+                catch
+                {
+                    var versionEdit = (IVersionEdit)m_editSession;
+                    versionEdit.Reconcile(_Config.arcgis_version);
+                    m_editSession.StopEditing(saveEdits);
+                }
+
+                Log.Info("Edit session stopped!");
+            }
+        }
+
         #endregion
 
 
@@ -492,8 +514,6 @@ namespace gbc.DAL
                 }
                 else 
                 {
-                    _SdeUtil.AddMissingFields(record.fields, m_featureClass);
-
                     return _SdeUtil.InsertFeature(m_featureClass, record.fields, this._geometryType, record.uid);
                 }
             }

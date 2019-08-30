@@ -33,7 +33,7 @@ namespace gbc.Util
 
 
         #region Feature Lifecycle
-
+        
         public IFeatureClass CreateFeatureClass(IFeatureWorkspace featureWorkspace,
             string sdeObject, IFields fields, string featureType, string keyword)
         {
@@ -859,7 +859,7 @@ namespace gbc.Util
         public void AddMissingFields(List<GeoField> fields, IFeatureClass featureClass)
         {
             ISchemaLock schemaLock = (ISchemaLock)featureClass;
-
+            
             try
             {
                 schemaLock.ChangeSchemaLock(esriSchemaLock.esriExclusiveSchemaLock);
