@@ -190,7 +190,14 @@ namespace gbc.DAL
 
         public void AddMissingFields(IGeoRecord record)
         {
-            _SdeUtil.AddMissingFields(record.fields, m_featureClass);
+            if (_geometryType.ToLower() == ApplicationConstants.SDEGeometry.Table)
+            {
+                _SdeUtil.AddMissingFields(record.fields, m_table);
+            }
+            else
+            {
+                _SdeUtil.AddMissingFields(record.fields, m_featureClass);
+            }
         }
 
         public int GetNextObjectID(string schema = "dbo")

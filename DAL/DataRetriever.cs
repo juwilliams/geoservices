@@ -1,5 +1,6 @@
 ﻿using ESRI.ArcGIS.Geodatabase;
 using gbc.Constants;
+using gbc.Util;
 using gbc.WebEOC7;
 using log4net;
 using SpatialConnect.Entity;
@@ -7,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Xml.Linq;
 
@@ -281,6 +284,12 @@ namespace gbc.DAL
             url = url.Replace(" ", encodedSpace);
             url = string.Format(url, where, sBuilder.ToString());
 
+            if (url.Contains("https"))
+            {
+                ServicePointManager.ServerCertificateValidationCallback += ValidateRemoteCertificate;
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            }
+
             using (WebClient client = new WebClient())
             {
                 client.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
@@ -476,6 +485,28 @@ namespace gbc.DAL
             //{
             //    throw new Exception(ExceptionConstants.ResponseExceptions.ERROR_CONTACTING_REMOTE_SERVER);
             //}
+        }
+
+        #endregion
+
+        #region Util
+
+        /// <summary>
+        /// Certificate validation callback.
+        /// </summary>
+        private static bool ValidateRemoteCertificate(object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors error)
+        {
+            // If the certificate is a valid, signed certificate, return true.
+            if (error == System.Net.Security.SslPolicyErrors.None)
+            {
+                return true;
+            }
+
+            _log.Error(string.Format("X509Certificate [{0}] Policy Error: '{1}'",
+                cert.Subject,
+                error.ToString()));
+
+            return false;
         }
 
         #endregion
